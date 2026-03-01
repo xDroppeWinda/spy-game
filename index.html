@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Stars: Шпион Онлайн</title>
+    <style>
+        body { font-family: Arial; background: #1a1a2e; color: white; text-align: center; padding: 50px; }
+        .container { background: #16213e; padding: 30px; border-radius: 15px; border: 3px solid #f2a900; max-width: 400px; margin: auto; }
+        input, button { padding: 10px; width: 90%; margin: 10px 0; font-size: 16px; border-radius: 5px; }
+        button { background: #f2a900; color: #1a1a2e; font-weight: bold; cursor: pointer; border: none; }
+        #role-screen { display: none; }
+        #role { font-size: 28px; color: #e94560; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="login-screen">
+    <h2>Введи свой ник</h2>
+    <input type="text" id="username" placeholder="Например: stytche">
+    <button onclick="register()">Войти в игру</button>
+</div>
+
+<div class="container" id="lobby-screen" style="display: none;">
+    <h2>Ожидание игроков...</h2>
+    <ul id="players-list"></ul>
+    <button onclick="startGame()">Начать игру</button>
+</div>
+
+<div class="container" id="role-screen">
+    <h2>Твоя роль:</h2>
+    <div id="role"></div>
+    <button onclick="location.reload()">Играть снова</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    function register() {
+        const name = document.getElementById('username').value;
+        if (!name) return;
+        socket.emit('register', name);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('lobby-screen').style.display = 'block';
+    }
+
+    // Обновление списка игроков в лобби
+    socket.on('update_players', (players) => {
+        const list = document.getElementById('players-list');
+        list.innerHTML = '';
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.innerText = p;
+            list.appendChild(li);
+        });
+    });
+
+    function startGame() {
+        socket.emit('start_game');
+    }
+
+    // Получение личной роли от сервера
+    socket.on('show_role', (role) => {
+        document.getElementById('lobby-screen').style.display = 'none';
+        document.getElementById('role-screen').style.display = 'block';
+        document.getElementById('role').innerText = role;
+    });
+</script>
+</body>
+</html>
