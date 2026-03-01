@@ -1,71 +1,99 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Stars: Шпион Онлайн</title>
-    <style>
-        body { font-family: Arial; background: #1a1a2e; color: white; text-align: center; padding: 50px; }
-        .container { background: #16213e; padding: 30px; border-radius: 15px; border: 3px solid #f2a900; max-width: 400px; margin: auto; }
-        input, button { padding: 10px; width: 90%; margin: 10px 0; font-size: 16px; border-radius: 5px; }
-        button { background: #f2a900; color: #1a1a2e; font-weight: bold; cursor: pointer; border: none; }
-        #role-screen { display: none; }
-        #role { font-size: 28px; color: #e94560; font-weight: bold; margin: 20px 0; }
-    </style>
+<meta charset="UTF-8">
+<title>Игра "Шпион" - Brawl Stars</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #1e1e2f;
+        color: white;
+    }
+    h1 {
+        margin-top: 20px;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 18px;
+        margin: 10px;
+        cursor: pointer;
+        border: none;
+        border-radius: 10px;
+    }
+    .start { background-color: #4CAF50; color: white; }
+    .next { background-color: #2196F3; color: white; }
+    .card {
+        margin-top: 20px;
+        font-size: 24px;
+        padding: 20px;
+        background-color: #333;
+        border-radius: 15px;
+        display: inline-block;
+        min-width: 300px;
+    }
+</style>
 </head>
 <body>
 
-<div class="container" id="login-screen">
-    <h2>Введи свой ник</h2>
-    <input type="text" id="username" placeholder="Например: stytche">
-    <button onclick="register()">Войти в игру</button>
-</div>
+<h1>Игра "Шпион" (Brawl Stars)</h1>
 
-<div class="container" id="lobby-screen" style="display: none;">
-    <h2>Ожидание игроков...</h2>
-    <ul id="players-list"></ul>
-    <button onclick="startGame()">Начать игру</button>
-</div>
+<button class="start" onclick="startGame()">Начать игру</button>
+<br>
+<button class="next" onclick="nextPlayer()" id="nextBtn" style="display:none;">Следующий игрок</button>
 
-<div class="container" id="role-screen">
-    <h2>Твоя роль:</h2>
-    <div id="role"></div>
-    <button onclick="location.reload()">Играть снова</button>
-</div>
+<div class="card" id="card">Нажмите "Начать игру"</div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io();
+const characters = [
+"Шелли", "Кольт", "Булл", "Джесси", "Брок", 
+"Динамайк", "Бо", "Тик", "8-Бит",
+"Эмз", "Сту", "Пайпер", "Пэм",
+"Фрэнк", "Биби", "Эдгар", "Грифф",
+"Гас", "Спайк", "Леон", "Ворон",
+"Сэнди", "Амбер", "Мэг", "Честер"
+];
 
-    function register() {
-        const name = document.getElementById('username').value;
-        if (!name) return;
-        socket.emit('register', name);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('lobby-screen').style.display = 'block';
+let selectedCharacter = "";
+let spyIndex = 0;
+let currentPlayer = 1;
+const totalPlayers = 4;
+
+function startGame() {
+    selectedCharacter = characters[Math.floor(Math.random() * characters.length)];
+    spyIndex = Math.floor(Math.random() * totalPlayers) + 1;
+    currentPlayer = 1;
+
+    document.getElementById("nextBtn").style.display = "inline-block";
+    document.getElementById("card").innerHTML = 
+        "Игрок 1<br><br><button onclick='revealRole()'>Показать роль</button>";
+}
+
+function revealRole() {
+    let text = "";
+    if (currentPlayer === spyIndex) {
+        text = "🤫 Ты шпион!";
+    } else {
+        text = "Твой персонаж: <br><b>" + selectedCharacter + "</b>";
     }
 
-    // Обновление списка игроков в лобби
-    socket.on('update_players', (players) => {
-        const list = document.getElementById('players-list');
-        list.innerHTML = '';
-        players.forEach(p => {
-            const li = document.createElement('li');
-            li.innerText = p;
-            list.appendChild(li);
-        });
-    });
+    document.getElementById("card").innerHTML = 
+        text + "<br><br><button onclick='hideRole()'>Скрыть</button>";
+}
 
-    function startGame() {
-        socket.emit('start_game');
+function hideRole() {
+    if (currentPlayer < totalPlayers) {
+        currentPlayer++;
+        document.getElementById("card").innerHTML = 
+            "Игрок " + currentPlayer + 
+            "<br><br><button onclick='revealRole()'>Показать роль</button>";
+    } else {
+        document.getElementById("card").innerHTML = 
+            "Игра окончена!<br>Шпион был: Игрок " + spyIndex +
+            "<br><br><button onclick='startGame()'>Играть снова</button>";
     }
-
-    // Получение личной роли от сервера
-    socket.on('show_role', (role) => {
-        document.getElementById('lobby-screen').style.display = 'none';
-        document.getElementById('role-screen').style.display = 'block';
-        document.getElementById('role').innerText = role;
-    });
+}
 </script>
+
 </body>
 </html>
